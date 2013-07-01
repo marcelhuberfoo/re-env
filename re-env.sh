@@ -25,25 +25,26 @@ function v {
   #   activate the virtualenv named venv
   # usage: v venvname
   #   activate the virtualenv named venvname
-  name=venv
-  if [ $1 ] ; then
-    name=$1
-  fi
-  olddir=$(pwd)
-  quit=0
+  name="${1:-.venv}"
+  # usually I do not want the script go further up than my home dir
+  stopdir="$(readlink -f ${HOME:-/})"
+  activateloc="$name/bin/activate"
+  olddir="$(pwd)"
   deactivate &>/dev/null
-  cwd=$(pwd)
-  while [ $quit -eq 0 ]
+  cwd="$(pwd)"
+  while true
   do
-    cd $cwd
-    if [ $cwd == '/' ] ; then
-      quit=1
+    cd "$cwd"
+    if [ -r "$activateloc" ]  ; then
+      echo "activating \"${cwd}/${name}\""
+      source "$activateloc"
+      break
     fi
-    if [ -e $name ]  ; then
-      source "$name/bin/activate"
-      quit=1
+    if [ "$cwd" == "$stopdir" ] ; then
+      echo "no virtual env ${name} found up to $stopdir"
+      break
     fi
-    cwd=$(readlink -f $(dirname $cwd))
+    cwd="$(readlink -f $(dirname "${cwd}"))"
   done
-  cd $olddir
+  cd "$olddir"
 }
